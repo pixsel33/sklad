@@ -54,7 +54,13 @@ db.exec(`
     balance REAL DEFAULT 0
   );
 
+  CREATE TABLE IF NOT EXISTS perechisleniya (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    balance REAL DEFAULT 0
+  );
+
   INSERT OR IGNORE INTO cash (id, balance) VALUES (1, 0);
+  INSERT OR IGNORE INTO perechisleniya (id, balance) VALUES (1, 0);
 `);
 
 // ─── SEED DEFAULT ADMIN ───
