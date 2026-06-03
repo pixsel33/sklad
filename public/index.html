@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>СкладПро — Система учёта</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+:root {
+  --bg: #0f1117;
+  --bg2: #161b25;
+  --bg3: #1e2535;
+  --bg4: #252d3d;
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.14);
+  --text: #e8ecf4;
+  --text2: #8b95a8;
+  --text3: #4f5a6e;
+  --accent: #3b82f6;
+  --accent2: #1d4ed8;
+  --green: #22c55e;
+  --green-bg: rgba(34,197,94,0.1);
+  --red: #ef4444;
+  --red-bg: rgba(239,68,68,0.1);
+  --amber: #f59e0b;
+  --amber-bg: rgba(245,158,11,0.1);
+  --teal: #14b8a6;
+  --teal-bg: rgba(20,184,166,0.1);
+  --r: 10px;
+  --r-sm: 6px;
+  --font: 'Golos Text', sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px; }
+input, select, textarea, button { font-family: var(--font); }
+
+/* ─── AUTH ─── */
+#auth-screen {
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(ellipse at 30% 20%, rgba(59,130,246,0.12) 0%, transparent 60%),
+              radial-gradient(ellipse at 80% 80%, rgba(20,184,166,0.08) 0%, transparent 50%),
+              var(--bg);
+}
+.auth-box {
+  width: 100%; max-width: 360px; margin: 0 16px;
+  background: var(--bg2); border: 1px solid var(--border2); border-radius: 16px; padding: 32px 28px;
+}
+.auth-logo { text-align: center; margin-bottom: 28px; }
+.auth-logo .logo-icon { font-size: 36px; color: var(--accent); display: block; margin-bottom: 8px; }
+.auth-logo h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.5px; }
+.auth-logo p { font-size: 13px; color: var(--text2); margin-top: 4px; }
+.form-field { margin-bottom: 14px; }
+.form-field label { display: block; font-size: 12px; font-weight: 500; color: var(--text2); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+.form-field input, .form-field select {
+  width: 100%; padding: 10px 14px; border-radius: var(--r-sm);
+  background: var(--bg3); border: 1px solid var(--border2); color: var(--text);
+  font-size: 14px; outline: none; transition: border 0.2s;
+}
+.form-field input:focus, .form-field select:focus { border-color: var(--accent); }
+.btn-login {
+  width: 100%; padding: 11px; border-radius: var(--r-sm); background: var(--accent);
+  color: #fff; border: none; font-size: 14px; font-weight: 600; cursor: pointer;
+  margin-top: 6px; transition: background 0.15s; letter-spacing: 0.3px;
+}
+.btn-login:hover { background: var(--accent2); }
+.auth-hint { font-size: 12px; color: var(--text3); text-align: center; margin-top: 18px; line-height: 1.5; }
+.auth-hint span { color: var(--text2); font-family: var(--mono); }
+
+/* ─── APP ─── */
+#app-screen { display: none; min-height: 100vh; }
+
+/* Sidebar */
+.sidebar {
+  position: fixed; left: 0; top: 0; bottom: 0; width: 220px;
+  background: var(--bg2); border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; z-index: 100;
+}
+.sidebar-logo {
+  padding: 20px 18px 16px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px;
+}
+.sidebar-logo .icon { font-size: 22px; color: var(--accent); }
+.sidebar-logo h2 { font-size: 16px; font-weight: 600; }
+.sidebar-logo span { font-size: 11px; color: var(--text3); display: block; margin-top: 1px; font-family: var(--mono); }
+.nav { padding: 12px 10px; flex: 1; overflow-y: auto; }
+.nav-section { font-size: 10px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; padding: 8px 8px 4px; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: var(--r-sm);
+  cursor: pointer; transition: all 0.15s; color: var(--text2); font-size: 13px; margin-bottom: 1px;
+}
+.nav-item i { font-size: 17px; width: 20px; text-align: center; }
+.nav-item:hover { background: var(--bg3); color: var(--text); }
+.nav-item.active { background: rgba(59,130,246,0.15); color: var(--accent); }
+.nav-item .badge {
+  margin-left: auto; font-size: 10px; background: var(--red); color: #fff;
+  border-radius: 20px; padding: 1px 6px; font-family: var(--mono);
+}
+.sidebar-user {
+  padding: 14px 14px; border-top: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px;
+}
+.user-avatar {
+  width: 32px; height: 32px; border-radius: 50%; background: rgba(59,130,246,0.2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 600; color: var(--accent); flex-shrink: 0;
+}
+.user-name { font-size: 13px; font-weight: 500; }
+.user-role { font-size: 11px; color: var(--text3); }
+.btn-logout {
+  margin-left: auto; background: none; border: none; color: var(--text3);
+  cursor: pointer; font-size: 16px; padding: 4px; border-radius: 4px;
+  transition: color 0.15s;
+}
+.btn-logout:hover { color: var(--red); }
+
+/* Main */
+.main { margin-left: 220px; min-height: 100vh; padding: 24px; }
+.page { display: none; }
+.page.active { display: block; }
+.page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+.page-title { font-size: 20px; font-weight: 600; letter-spacing: -0.3px; }
+.page-sub { font-size: 13px; color: var(--text2); margin-top: 2px; }
+
+/* Stats grid */
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
+.stat-card {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r);
+  padding: 16px 18px; position: relative; overflow: hidden;
+}
+.stat-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+}
+.stat-card.green::before { background: var(--green); }
+.stat-card.blue::before { background: var(--accent); }
+.stat-card.red::before { background: var(--red); }
+.stat-card.amber::before { background: var(--amber); }
+.stat-icon { font-size: 22px; margin-bottom: 10px; }
+.stat-card.green .stat-icon { color: var(--green); }
+.stat-card.blue .stat-icon { color: var(--accent); }
+.stat-card.red .stat-icon { color: var(--red); }
+.stat-card.amber .stat-icon { color: var(--amber); }
+.stat-card.amber .stat-val { color: var(--amber); }
+.stat-label { font-size: 12px; color: var(--text2); font-weight: 500; }
+.stat-val { font-size: 22px; font-weight: 600; margin-top: 4px; font-family: var(--mono); letter-spacing: -0.5px; }
+.stat-change { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+/* Cards */
+.card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 18px 20px; margin-bottom: 16px;
+}
+.card-title { font-size: 14px; font-weight: 600; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+.card-title i { color: var(--accent); }
+
+/* Table */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { text-align: left; padding: 8px 12px; color: var(--text3); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); }
+td { padding: 10px 12px; border-bottom: 1px solid var(--border); color: var(--text2); vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--bg3); }
+td .name { color: var(--text); font-weight: 500; }
+.qty-badge {
+  display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 12px;
+  font-family: var(--mono); font-weight: 500;
+}
+.qty-ok { background: var(--green-bg); color: var(--green); }
+.qty-low { background: var(--amber-bg); color: var(--amber); }
+.qty-zero { background: var(--red-bg); color: var(--red); }
+
+/* Op type badges */
+.op-badge {
+  display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px;
+  border-radius: 20px; font-size: 11px; font-weight: 500;
+}
+.op-in { background: var(--green-bg); color: var(--green); }
+.op-out { background: var(--red-bg); color: var(--red); }
+.op-sale { background: rgba(59,130,246,0.12); color: var(--accent); }
+.op-money { background: var(--teal-bg); color: var(--teal); }
+
+/* Forms */
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.form-grid.triple { grid-template-columns: 1fr 1fr 1fr; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field label { font-size: 11px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; }
+.field input, .field select, .field textarea {
+  padding: 9px 12px; border-radius: var(--r-sm);
+  background: var(--bg3); border: 1px solid var(--border2); color: var(--text);
+  font-size: 13px; outline: none; transition: border 0.2s;
+}
+.field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); }
+.field.full { grid-column: 1 / -1; }
+.btn {
+  padding: 9px 18px; border-radius: var(--r-sm); font-size: 13px; font-weight: 600;
+  cursor: pointer; border: 1px solid var(--border2); transition: all 0.15s;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+.btn-primary:hover { background: var(--accent2); }
+.btn-ghost { background: var(--bg3); color: var(--text2); }
+.btn-ghost:hover { background: var(--bg4); color: var(--text); }
+.btn-danger { background: var(--red-bg); color: var(--red); border-color: transparent; }
+.btn-danger:hover { background: rgba(239,68,68,0.2); }
+.btn-sm { padding: 5px 12px; font-size: 12px; }
+.btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+
+/* Alert */
+.alert {
+  padding: 12px 16px; border-radius: var(--r-sm); font-size: 13px;
+  margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
+}
+.alert-success { background: var(--green-bg); color: var(--green); border: 1px solid rgba(34,197,94,0.2); }
+.alert-error { background: var(--red-bg); color: var(--red); border: 1px solid rgba(239,68,68,0.2); }
+
+/* Stock items grid */
+.stock-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-top: 16px; }
+.stock-item {
+  background: var(--bg3); border: 1px solid var(--border); border-radius: var(--r);
+  padding: 14px; transition: border-color 0.15s;
+}
+.stock-item:hover { border-color: var(--border2); }
+.stock-item-name { font-weight: 600; font-size: 13px; margin-bottom: 4px; }
+.stock-item-cat { font-size: 11px; color: var(--text3); margin-bottom: 10px; }
+.stock-item-qty { font-size: 20px; font-weight: 600; font-family: var(--mono); }
+.stock-item-price { font-size: 11px; color: var(--text2); margin-top: 4px; }
+
+/* Users panel */
+.user-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px; border-radius: var(--r-sm);
+  background: var(--bg3); margin-bottom: 8px; border: 1px solid var(--border);
+}
+.role-pill {
+  font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 600;
+}
+.role-admin { background: rgba(59,130,246,0.15); color: var(--accent); }
+.role-cashier { background: var(--teal-bg); color: var(--teal); }
+
+/* Empty state */
+.empty { text-align: center; padding: 40px 20px; color: var(--text3); }
+.empty i { font-size: 40px; display: block; margin-bottom: 10px; }
+.empty p { font-size: 13px; }
+
+/* Notification toast */
+#toast {
+  position: fixed; bottom: 24px; right: 24px; z-index: 999;
+  background: var(--bg3); border: 1px solid var(--border2); border-radius: var(--r);
+  padding: 12px 18px; font-size: 13px; display: none; max-width: 280px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  animation: slideIn 0.2s ease;
+}
+#toast.show { display: flex; align-items: center; gap: 8px; }
+#toast.toast-ok { border-color: rgba(34,197,94,0.3); color: var(--green); }
+#toast.toast-err { border-color: rgba(239,68,68,0.3); color: var(--red); }
+@keyframes slideIn { from { transform: translateY(8px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* Mobile nav */
+.mobile-nav {
+  display: none; position: fixed; bottom: 0; left: 0; right: 0;
+  background: var(--bg2); border-top: 1px solid var(--border);
+  padding: 6px 0 calc(6px + env(safe-area-inset-bottom)); z-index: 100;
+}
+.mobile-nav-items { display: flex; }
+.mobile-nav-item {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  gap: 2px; padding: 6px 4px; cursor: pointer; color: var(--text3);
+  font-size: 10px; transition: color 0.15s;
+}
+.mobile-nav-item i { font-size: 20px; }
+.mobile-nav-item.active { color: var(--accent); }
+
+@media (max-width: 768px) {
+  .sidebar { display: none; }
+  .main { margin-left: 0; padding: 16px 14px 80px; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .form-grid { grid-template-columns: 1fr; }
+  .form-grid.triple { grid-template-columns: 1fr; }
+  .mobile-nav { display: block; }
+  .page-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+}
+@media (max-width: 480px) {
+  .stats-grid { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div id="auth-screen">
+  <div class="auth-box">
+    <div class="auth-logo">
+      <i class="ti ti-building-warehouse logo-icon"></i>
+      <h1>СкладПро</h1>
+      <p>Система учёта товаров</p>
+    </div>
+    <div id="auth-error" style="display:none" class="alert alert-error"><i class="ti ti-alert-circle"></i><span></span></div>
+    <div class="form-field">
+      <label>Логин</label>
+      <input type="text" id="login-user" placeholder="Введите логин" autocomplete="username">
+    </div>
+    <div class="form-field">
+      <label>Пароль</label>
+      <input type="password" id="login-pass" placeholder="Введите пароль" autocomplete="current-password">
+    </div>
+    <button class="btn-login" onclick="doLogin()"><i class="ti ti-login"></i> Войти</button>
+    <div class="auth-hint">
+      Логин: <span>admin</span> / Пароль: <span>admin123</span>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app-screen">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <i class="ti ti-building-warehouse icon"></i>
+      <div>
+        <h2>СкладПро</h2>
+        <span>v1.0</span>
+      </div>
+    </div>
+    <nav class="nav">
+      <div class="nav-section">Главное</div>
+      <div class="nav-item active" onclick="navigate('dashboard')"><i class="ti ti-dashboard"></i> Сводка</div>
+      <div class="nav-item" onclick="navigate('stock')"><i class="ti ti-package"></i> Склад</div>
+      <div class="nav-section">Операции</div>
+      <div class="nav-item" onclick="navigate('income')"><i class="ti ti-arrow-bar-down"></i> Приход товара</div>
+      <div class="nav-item" onclick="navigate('money')"><i class="ti ti-cash"></i> Приход денег</div>
+      <div class="nav-item" onclick="navigate('expense')"><i class="ti ti-arrow-bar-up"></i> Расход</div>
+      <div class="nav-item" onclick="navigate('sale')"><i class="ti ti-shopping-cart"></i> Продажи</div>
+      <div class="nav-section">Отчёты</div>
+      <div class="nav-item" onclick="navigate('history')"><i class="ti ti-history"></i> История</div>
+      <div class="nav-item admin-only" onclick="navigate('admin')"><i class="ti ti-shield"></i> Админ-панель</div>
+    </nav>
+    <div class="sidebar-user">
+      <div class="user-avatar" id="sidebar-avatar">A</div>
+      <div>
+        <div class="user-name" id="sidebar-name">Admin</div>
+        <div class="user-role" id="sidebar-role">Администратор</div>
+      </div>
+      <button class="btn-logout" onclick="doLogout()" title="Выйти"><i class="ti ti-logout"></i></button>
+    </div>
+  </div>
+
+  <!-- Mobile nav -->
+  <div class="mobile-nav">
+    <div class="mobile-nav-items">
+      <div class="mobile-nav-item active" onclick="navigate('dashboard')"><i class="ti ti-dashboard"></i>Сводка</div>
+      <div class="mobile-nav-item" onclick="navigate('stock')"><i class="ti ti-package"></i>Склад</div>
+      <div class="mobile-nav-item" onclick="navigate('income')"><i class="ti ti-arrow-bar-down"></i>Приход</div>
+      <div class="mobile-nav-item" onclick="navigate('sale')"><i class="ti ti-shopping-cart"></i>Продажа</div>
+      <div class="mobile-nav-item" onclick="navigate('history')"><i class="ti ti-history"></i>История</div>
+    </div>
+  </div>
+
+  <div class="main">
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Добро пожаловать 👋</div>
+          <div class="page-sub" id="dash-date"></div>
+        </div>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card green">
+          <div class="stat-icon"><i class="ti ti-wallet"></i></div>
+          <div class="stat-label">Касса</div>
+          <div class="stat-val" id="d-cash">0</div>
+          <div class="stat-change">Текущий остаток</div>
+        </div>
+        <div class="stat-card blue">
+          <div class="stat-icon"><i class="ti ti-package"></i></div>
+          <div class="stat-label">Товаров на складе</div>
+          <div class="stat-val" id="d-items">0</div>
+          <div class="stat-change" id="d-cats">0 категорий</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-icon"><i class="ti ti-trending-up"></i></div>
+          <div class="stat-label">Продажи сегодня</div>
+          <div class="stat-val" id="d-sales">0</div>
+          <div class="stat-change" id="d-sales-cnt">операций</div>
+        </div>
+        <div class="stat-card red">
+          <div class="stat-icon"><i class="ti ti-trending-down"></i></div>
+          <div class="stat-label">Расходы сегодня</div>
+          <div class="stat-val" id="d-expenses">0</div>
+          <div class="stat-change">сумма</div>
+        </div>
+        <div class="stat-card amber" style="grid-column:1/-1">
+          <div class="stat-icon"><i class="ti ti-credit-card-off"></i></div>
+          <div class="stat-label">Долги (Карз)</div>
+          <div class="stat-val" id="d-debts">0</div>
+          <div class="stat-change">Общая сумма задолженностей</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="ti ti-activity"></i> Последние операции</div>
+        <div class="table-wrap"><div id="dash-ops"></div></div>
+      </div>
+    </div>
+
+    <!-- STOCK -->
+    <div class="page" id="page-stock">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Склад</div>
+          <div class="page-sub">Остатки товаров</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <select id="stock-filter-cat" onchange="renderStock()" style="padding:8px 12px;border-radius:6px;background:var(--bg3);border:1px solid var(--border2);color:var(--text);font-size:13px;outline:none;">
+            <option value="">Все категории</option>
+          </select>
+        </div>
+      </div>
+      <div id="stock-grid-wrap"></div>
+    </div>
+
+    <!-- INCOME (GOODS) -->
+    <div class="page" id="page-income">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Приход товара</div>
+          <div class="page-sub">Добавить товар на склад</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="ti ti-box"></i> Новый приход</div>
+        <div class="form-grid triple">
+          <div class="field"><label>Название товара</label><input id="i-name" placeholder="Напр: Мука 1кг"></div>
+          <div class="field"><label>Категория</label>
+            <select id="i-cat">
+              <option>Уголь</option>
+            </select>
+          </div>
+          <div class="field"><label>Единица измерения</label>
+            <select id="i-unit"><option>тонна</option><option>кг</option></select>
+          </div>
+          <div class="field"><label>Количество</label><input id="i-qty" type="number" placeholder="0" min="1"></div>
+          <div class="field"><label>Цена закупки (сум)</label><input id="i-price" type="number" placeholder="0" min="0"></div>
+          <div class="field full"><label>Комментарий</label><input id="i-note" placeholder="Необязательно..."></div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="addGoodsIncome()"><i class="ti ti-plus"></i> Добавить приход</button>
+          <button class="btn btn-ghost" onclick="clearForm('income')"><i class="ti ti-refresh"></i> Очистить</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="ti ti-history"></i> Последние приходы товаров</div>
+        <div class="table-wrap"><div id="income-history"></div></div>
+      </div>
+    </div>
+
+    <!-- MONEY INCOME -->
+    <div class="page" id="page-money">
+      <div class="page-header">
+        <div><div class="page-title">Приход денег</div><div class="page-sub">Пополнение кассы</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="ti ti-cash"></i> Добавить деньги</div>
+        <div class="form-grid">
+          <div class="field"><label>Сумма (сум)</label><input id="m-amount" type="number" placeholder="0" min="0"></div>
+          <div class="field"><label>Категория</label>
+            <select id="m-source">
+              <option>Карта</option><option>Перечисления</option><option>Карз</option><option>Нахт</option>
+            </select>
+          </div>
+          <div class="field full"><label>Примечание</label><input id="m-note" placeholder="Необязательно..."></div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="addMoneyIncome()"><i class="ti ti-plus"></i> Добавить</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- EXPENSE -->
+    <div class="page" id="page-expense">
+      <div class="page-header">
+        <div><div class="page-title">Расход</div><div class="page-sub">Списание денег из кассы</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="ti ti-arrow-bar-up"></i> Новый расход</div>
+        <div class="form-grid">
+          <div class="field"><label>Сумма (сум)</label><input id="e-amount" type="number" placeholder="0" min="0"></div>
+          <div class="field"><label>Категория</label>
+            <select id="e-cat">
+              <option>Аренда</option><option>Зарплата</option>
+              <option>Коммунальные</option><option>Транспорт</option><option>Реклама</option><option>Другое</option>
+            </select>
+          </div>
+          <div class="field full"><label>Описание</label><input id="e-desc" placeholder="На что потрачено?"></div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="addExpense()"><i class="ti ti-minus"></i> Записать расход</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SALE -->
+    <div class="page" id="page-sale">
+      <div class="page-header">
+        <div><div class="page-title">Продажа</div><div class="page-sub">Оформление продажи товара</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="ti ti-shopping-cart"></i> Новая продажа</div>
+        <div id="sale-nostock" style="display:none" class="alert alert-error"><i class="ti ti-alert-circle"></i> Нет товаров на складе</div>
+        <div class="form-grid">
+          <div class="field"><label>Клиент</label><input id="s-client" placeholder="Имя клиента"></div>
+          <div class="field"><label>Товар</label><select id="s-item" onchange="fillSalePrice()"></select></div>
+          <div class="field"><label>Количество</label><input id="s-qty" type="number" placeholder="1" min="1" oninput="calcSaleTotal()"></div>
+          <div class="field"><label>Цена продажи (сум)</label><input id="s-price" type="number" placeholder="0" min="0" oninput="calcSaleTotal()"></div>
+          <div class="field"><label>Способ оплаты</label>
+            <select id="s-paytype">
+              <option>Карта</option><option>Перечисления</option><option>Карз</option><option>Нахт</option>
+            </select>
+          </div>
+          <div class="field"><label>Итого</label>
+            <input id="s-total" readonly placeholder="0" style="background:var(--bg4);font-family:var(--mono);font-weight:600;color:var(--green)">
+          </div>
+        </div>
+        <div id="sale-profit-line" style="font-size:12px;color:var(--text2);margin-top:8px;display:none">
+          Прибыль: <span id="sale-profit" style="color:var(--green);font-weight:600;font-family:var(--mono)">0</span>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="addSale()"><i class="ti ti-receipt"></i> Оформить продажу</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="ti ti-chart-bar"></i> Продажи сегодня</div>
+        <div class="table-wrap"><div id="today-sales"></div></div>
+      </div>
+    </div>
+
+    <!-- HISTORY -->
+    <div class="page" id="page-history">
+      <div class="page-header">
+        <div><div class="page-title">История операций</div></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <select id="h-filter" onchange="renderHistory()" style="padding:8px 12px;border-radius:6px;background:var(--bg3);border:1px solid var(--border2);color:var(--text);font-size:13px;outline:none;">
+            <option value="all">Все</option>
+            <option value="income-goods">Приход товара</option>
+            <option value="income-money">Приход денег</option>
+            <option value="expense">Расход</option>
+            <option value="sale">Продажи</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" onclick="exportCSV()"><i class="ti ti-download"></i> CSV</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="table-wrap"><div id="history-list"></div></div>
+      </div>
+    </div>
+
+    <!-- ADMIN -->
+    <div class="page" id="page-admin">
+      <div class="page-header">
+        <div><div class="page-title">Админ-панель</div><div class="page-sub">Управление системой</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px" class="admin-grid">
+        <div class="card">
+          <div class="card-title"><i class="ti ti-users"></i> Пользователи</div>
+          <div id="users-list"></div>
+          <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
+            <div class="form-grid">
+              <div class="field"><label>Логин</label><input id="new-login" placeholder="Логин"></div>
+              <div class="field"><label>Пароль</label><input id="new-pass" type="password" placeholder="Пароль"></div>
+              <div class="field"><label>Роль</label>
+                <select id="new-role"><option value="admin">Администратор</option></select>
+              </div>
+            </div>
+            <div class="btn-row">
+              <button class="btn btn-primary btn-sm" onclick="addUser()"><i class="ti ti-user-plus"></i> Добавить</button>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title"><i class="ti ti-chart-pie"></i> Статистика системы</div>
+          <div id="admin-stats"></div>
+        </div>
+        <div class="card" style="grid-column:1/-1">
+          <div class="card-title"><i class="ti ti-tool"></i> Действия</div>
+          <div class="btn-row">
+            <button class="btn btn-ghost" onclick="exportCSV()"><i class="ti ti-file-export"></i> Экспорт истории (CSV)</button>
+            <button class="btn btn-danger" onclick="if(confirm('Очистить все данные?')){resetAll()}"><i class="ti ti-trash"></i> Сбросить все данные</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+let currentUser = null;
+let TOKEN = localStorage.getItem('sklad_token') || null;
+
+const API = '';  // same origin
+
+async function api(method, url, body) {
+  const opts = {
+    method,
+    headers: { 'Content-Type': 'application/json' }
+  };
+  if (TOKEN) opts.headers['Authorization'] = 'Bearer ' + TOKEN;
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(API + url, opts);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Ошибка сервера');
+  return data;
+}
+
+function fmt(n) { return Number(n || 0).toLocaleString('ru-RU') + ' сум'; }
+function fmtNum(n) { return Number(n || 0).toLocaleString('ru-RU'); }
+
+function toast(msg, ok = true) {
+  const t = document.getElementById('toast');
+  t.className = 'show ' + (ok ? 'toast-ok' : 'toast-err');
+  t.innerHTML = `<i class="ti ti-${ok ? 'circle-check' : 'alert-circle'}"></i> ${msg}`;
+  setTimeout(() => t.className = '', 3000);
+}
+
+function showApp(user) {
+  currentUser = user;
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app-screen').style.display = 'block';
+  document.getElementById('sidebar-avatar').textContent = user.name[0].toUpperCase();
+  document.getElementById('sidebar-name').textContent = user.name;
+  document.getElementById('sidebar-role').textContent = user.role === 'admin' ? 'Администратор' : 'Кассир';
+  document.querySelectorAll('.admin-only').forEach(el => {
+    el.style.display = user.role === 'admin' ? '' : 'none';
+  });
+  navigate('dashboard');
+}
+
+async function doLogin() {
+  const login = document.getElementById('login-user').value.trim();
+  const password = document.getElementById('login-pass').value;
+  const err = document.getElementById('auth-error');
+  try {
+    const data = await api('POST', '/api/auth/login', { login, password });
+    TOKEN = data.token;
+    localStorage.setItem('sklad_token', TOKEN);
+    err.style.display = 'none';
+    showApp(data.user);
+  } catch(e) {
+    err.style.display = 'flex';
+    err.querySelector('span').textContent = e.message;
+  }
+}
+
+function doLogout() {
+  currentUser = null;
+  TOKEN = null;
+  localStorage.removeItem('sklad_token');
+  document.getElementById('auth-screen').style.display = 'flex';
+  document.getElementById('app-screen').style.display = 'none';
+  document.getElementById('login-pass').value = '';
+}
+
+function navigate(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.mobile-nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.getAttribute('onclick')?.includes("'"+id+"'")) n.classList.add('active');
+  });
+  document.querySelectorAll('.mobile-nav-item').forEach(n => {
+    if (n.getAttribute('onclick')?.includes("'"+id+"'")) n.classList.add('active');
+  });
+  if (id === 'dashboard') renderDashboard();
+  if (id === 'stock') renderStock();
+  if (id === 'sale') { populateSaleItems(); renderTodaySales(); }
+  if (id === 'history') renderHistory();
+  if (id === 'income') renderIncomeHistory();
+  if (id === 'admin') renderAdmin();
+}
+
+async function addGoodsIncome() {
+  const name = document.getElementById('i-name').value.trim();
+  const category = document.getElementById('i-cat').value;
+  const unit = document.getElementById('i-unit').value;
+  const qty = parseFloat(document.getElementById('i-qty').value) || 0;
+  const price = parseFloat(document.getElementById('i-price').value) || 0;
+  const note = document.getElementById('i-note').value.trim();
+  if (!name) return toast('Введите название товара', false);
+  if (qty <= 0) return toast('Укажите количество', false);
+  try {
+    await api('POST', '/api/ops/income-goods', { name, category, unit, qty, price, note });
+    clearForm('income');
+    renderIncomeHistory();
+    toast(`${name} — ${qty} ${unit} добавлено на склад`);
+  } catch(e) { toast(e.message, false); }
+}
+
+async function addMoneyIncome() {
+  const amount = parseFloat(document.getElementById('m-amount').value) || 0;
+  const source = document.getElementById('m-source').value;
+  const note = document.getElementById('m-note').value.trim();
+  if (amount <= 0) return toast('Укажите сумму', false);
+  try {
+    await api('POST', '/api/ops/income-money', { amount, source, note });
+    document.getElementById('m-amount').value = '';
+    document.getElementById('m-note').value = '';
+    toast(fmt(amount) + ' добавлено в кассу');
+  } catch(e) { toast(e.message, false); }
+}
+
+async function addExpense() {
+  const amount = parseFloat(document.getElementById('e-amount').value) || 0;
+  const category = document.getElementById('e-cat').value;
+  const description = document.getElementById('e-desc').value.trim();
+  if (amount <= 0) return toast('Укажите сумму', false);
+  try {
+    await api('POST', '/api/ops/expense', { amount, category, description });
+    document.getElementById('e-amount').value = '';
+    document.getElementById('e-desc').value = '';
+    toast('Расход ' + fmt(amount) + ' записан');
+  } catch(e) { toast(e.message, false); }
+}
+
+async function populateSaleItems() {
+  const sel = document.getElementById('s-item');
+  try {
+    const items = await api('GET', '/api/stock');
+    const inStock = items.filter(i => i.qty > 0);
+    document.getElementById('sale-nostock').style.display = inStock.length ? 'none' : 'flex';
+    sel.innerHTML = inStock.length
+      ? inStock.map(i => `<option value="${i.name}" data-price="${i.buy_price}" data-qty="${i.qty}">${i.name} (${i.qty} ${i.unit||'шт'})</option>`).join('')
+      : '<option>Нет товаров</option>';
+    calcSaleTotal();
+  } catch(e) {}
+}
+
+function fillSalePrice() {
+  const sel = document.getElementById('s-item');
+  const opt = sel.options[sel.selectedIndex];
+  if (opt && opt.dataset.price) {
+    document.getElementById('s-price').value = opt.dataset.price;
+    calcSaleTotal();
+  }
+}
+
+function calcSaleTotal() {
+  const qty = parseFloat(document.getElementById('s-qty').value) || 0;
+  const price = parseFloat(document.getElementById('s-price').value) || 0;
+  const total = qty * price;
+  document.getElementById('s-total').value = total ? fmtNum(total) + ' сум' : '';
+  const sel = document.getElementById('s-item');
+  const opt = sel.options[sel.selectedIndex];
+  if (opt && opt.dataset.price && qty > 0 && price > 0) {
+    const cost = parseFloat(opt.dataset.price) || 0;
+    document.getElementById('sale-profit').textContent = fmt((price - cost) * qty);
+    document.getElementById('sale-profit-line').style.display = 'block';
+  } else {
+    document.getElementById('sale-profit-line').style.display = 'none';
+  }
+}
+
+async function addSale() {
+  const name = document.getElementById('s-item').value;
+  const qty = parseFloat(document.getElementById('s-qty').value) || 0;
+  const price = parseFloat(document.getElementById('s-price').value) || 0;
+  const paytype = document.getElementById('s-paytype').value;
+  const client = document.getElementById('s-client').value.trim();
+  if (!name || qty <= 0 || price <= 0) return toast('Заполните все поля', false);
+  try {
+    const res = await api('POST', '/api/ops/sale', { name, qty, price, paytype, client });
+    document.getElementById('s-qty').value = '';
+    document.getElementById('s-client').value = '';
+    await populateSaleItems();
+    renderTodaySales();
+    toast(`Продажа ${name} — ${fmt(res.total)}`);
+  } catch(e) { toast(e.message, false); }
+}
+
+function clearForm(f) {
+  if (f === 'income') {
+    ['i-name','i-qty','i-price','i-note'].forEach(id => document.getElementById(id).value = '');
+  }
+}
+
+// ─── RENDER ───
+
+async function renderDashboard() {
+  document.getElementById('dash-date').textContent = new Date().toLocaleDateString('ru-RU', {weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  try {
+    const stats = await api('GET', '/api/ops/stats');
+    document.getElementById('d-cash').textContent = fmtNum(stats.cash);
+    document.getElementById('d-items').textContent = fmtNum(stats.stockQty);
+    document.getElementById('d-cats').textContent = stats.stockCats + ' категорий';
+    document.getElementById('d-sales').textContent = fmtNum(stats.salesToday);
+    document.getElementById('d-sales-cnt').textContent = stats.salesCnt + ' продаж';
+    document.getElementById('d-expenses').textContent = fmtNum(stats.expenseToday);
+    document.getElementById('d-debts').textContent = fmtNum(stats.debts);
+    const ops = await api('GET', '/api/ops?limit=8');
+    const el = document.getElementById('dash-ops');
+    el.innerHTML = ops.length ? opTable(ops) : '<div class="empty"><i class="ti ti-inbox"></i><p>Операций пока нет</p></div>';
+  } catch(e) { console.error(e); }
+}
+
+function opTable(ops) {
+  if (!ops.length) return '<div class="empty"><i class="ti ti-inbox"></i><p>Нет записей</p></div>';
+  return `<table><thead><tr><th>Тип</th><th>Описание</th><th>Сумма</th><th>Дата</th><th>Кто</th></tr></thead><tbody>` +
+    ops.map(op => {
+      const d = new Date(op.created_at * 1000).toLocaleString('ru-RU', {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+      if (op.type === 'income-goods')
+        return `<tr><td><span class="op-badge op-in"><i class="ti ti-arrow-down"></i> Товар</span></td><td><span class="name">${op.name}</span><br><span style="font-size:11px;color:var(--text3)">${op.category||''} · ${op.qty} ${op.unit||'шт'}</span></td><td style="font-family:var(--mono);color:var(--text2)">−${fmt(op.total)}</td><td>${d}</td><td style="color:var(--text3)">${op.user_login||'—'}</td></tr>`;
+      if (op.type === 'income-money')
+        return `<tr><td><span class="op-badge op-money"><i class="ti ti-cash"></i> Деньги</span></td><td><span class="name">${op.source||'Приход'}</span><br><span style="font-size:11px;color:var(--text3)">${op.note||''}</span></td><td style="font-family:var(--mono);color:var(--teal)">+${fmt(op.amount)}</td><td>${d}</td><td style="color:var(--text3)">${op.user_login||'—'}</td></tr>`;
+      if (op.type === 'expense')
+        return `<tr><td><span class="op-badge op-out"><i class="ti ti-arrow-up"></i> Расход</span></td><td><span class="name">${op.category||''}</span><br><span style="font-size:11px;color:var(--text3)">${op.description||''}</span></td><td style="font-family:var(--mono);color:var(--red)">−${fmt(op.amount)}</td><td>${d}</td><td style="color:var(--text3)">${op.user_login||'—'}</td></tr>`;
+      if (op.type === 'sale')
+        return `<tr><td><span class="op-badge op-sale"><i class="ti ti-shopping-cart"></i> Продажа</span></td><td><span class="name">${op.name}</span><br><span style="font-size:11px;color:var(--text3)">${op.qty} шт × ${fmtNum(op.price)} · ${op.paytype||'—'}${op.client ? ' · <span style="color:var(--accent)">'+op.client+'</span>' : ''}</span></td><td style="font-family:var(--mono);color:var(--green)">+${fmt(op.total)}</td><td>${d}</td><td style="color:var(--text3)">${op.user_login||'—'}</td></tr>`;
+      return '';
+    }).join('') + '</tbody></table>';
+}
+
+async function renderStock() {
+  const filterEl = document.getElementById('stock-filter-cat');
+  const currentFilter = filterEl.value;
+  try {
+    const cats = await api('GET', '/api/stock/categories');
+    filterEl.innerHTML = '<option value="">Все категории</option>' + cats.map(c => `<option value="${c}" ${c===currentFilter?'selected':''}>${c}</option>`).join('');
+    const url = currentFilter ? `/api/stock?category=${encodeURIComponent(currentFilter)}` : '/api/stock';
+    const items = await api('GET', url);
+    const el = document.getElementById('stock-grid-wrap');
+    if (!items.length) { el.innerHTML = '<div class="empty"><i class="ti ti-package-off"></i><p>Товаров нет</p></div>'; return; }
+    el.innerHTML = '<div class="stock-grid">' + items.map(v => {
+      const qClass = v.qty === 0 ? 'qty-zero' : v.qty < 5 ? 'qty-low' : 'qty-ok';
+      return `<div class="stock-item">
+        <div class="stock-item-name">${v.name}</div>
+        <div class="stock-item-cat">${v.category||'—'}</div>
+        <div class="stock-item-qty"><span class="qty-badge ${qClass}">${v.qty} ${v.unit||'шт'}</span></div>
+        <div class="stock-item-price">Закупка: ${fmtNum(v.buy_price)} сум/${v.unit||'шт'}</div>
+      </div>`;
+    }).join('') + '</div>';
+  } catch(e) { console.error(e); }
+}
+
+async function renderIncomeHistory() {
+  const ops = await api('GET', '/api/ops?type=income-goods&limit=15');
+  document.getElementById('income-history').innerHTML = opTable(ops);
+}
+
+async function renderTodaySales() {
+  const ops = await api('GET', '/api/ops?type=sale&limit=50');
+  const today = new Date().toDateString();
+  const todayOps = ops.filter(o => new Date(o.created_at * 1000).toDateString() === today);
+  document.getElementById('today-sales').innerHTML = opTable(todayOps);
+}
+
+async function renderHistory() {
+  const f = document.getElementById('h-filter').value;
+  const url = f === 'all' ? '/api/ops?limit=200' : `/api/ops?type=${f}&limit=200`;
+  const ops = await api('GET', url);
+  document.getElementById('history-list').innerHTML = opTable(ops);
+}
+
+async function renderAdmin() {
+  try {
+    const users = await api('GET', '/api/users');
+    document.getElementById('users-list').innerHTML = users.map(u => `
+      <div class="user-row">
+        <div class="user-avatar">${u.name[0]}</div>
+        <div style="flex:1"><div style="font-weight:500;font-size:13px">${u.name}</div><div style="font-size:11px;color:var(--text3);font-family:var(--mono)">${u.login}</div></div>
+        <span class="role-pill ${u.role === 'admin' ? 'role-admin' : 'role-cashier'}">${u.role === 'admin' ? 'Admin' : 'Кассир'}</span>
+        ${u.login !== 'admin' ? `<button class="btn btn-danger btn-sm" onclick="removeUser(${u.id})"><i class="ti ti-trash"></i></button>` : ''}
+      </div>
+    `).join('');
+
+    const stats = await api('GET', '/api/ops/stats');
+    const allOps = await api('GET', '/api/ops?limit=1000');
+    const totalSales = allOps.filter(o=>o.type==='sale').reduce((a,b)=>a+b.total,0);
+    const totalExp = allOps.filter(o=>o.type==='expense').reduce((a,b)=>a+b.amount,0);
+    const totalProfit = allOps.filter(o=>o.type==='sale').reduce((a,b)=>a+(b.profit||0),0);
+    document.getElementById('admin-stats').innerHTML = `
+      <div style="display:grid;gap:10px">
+        <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text2)">Операций всего</span><span style="font-family:var(--mono);font-weight:600">${allOps.length}</span></div>
+        <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text2)">Товаров на складе</span><span style="font-family:var(--mono);font-weight:600">${fmtNum(stats.stockQty)}</span></div>
+        <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text2)">Выручка (всего)</span><span style="font-family:var(--mono);font-weight:600;color:var(--green)">${fmt(totalSales)}</span></div>
+        <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text2)">Расходы (всего)</span><span style="font-family:var(--mono);font-weight:600;color:var(--red)">${fmt(totalExp)}</span></div>
+        <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text2)">Чистая прибыль</span><span style="font-family:var(--mono);font-weight:600;color:var(--teal)">${fmt(totalProfit)}</span></div>
+        <div style="display:flex;justify-content:space-between;padding:10px 0"><span style="color:var(--text2)">Долги (Карз)</span><span style="font-family:var(--mono);font-weight:600;color:var(--amber)">${fmt(stats.debts)}</span></div>
+      </div>
+    `;
+  } catch(e) { console.error(e); }
+}
+
+async function addUser() {
+  const login = document.getElementById('new-login').value.trim();
+  const password = document.getElementById('new-pass').value.trim();
+  const role = document.getElementById('new-role').value;
+  if (!login || !password) return toast('Заполните логин и пароль', false);
+  try {
+    await api('POST', '/api/users', { login, password, role, name: login });
+    document.getElementById('new-login').value = '';
+    document.getElementById('new-pass').value = '';
+    renderAdmin();
+    toast('Пользователь добавлен');
+  } catch(e) { toast(e.message, false); }
+}
+
+async function removeUser(id) {
+  if (!confirm('Удалить пользователя?')) return;
+  try {
+    await api('DELETE', `/api/users/${id}`);
+    renderAdmin();
+    toast('Пользователь удалён');
+  } catch(e) { toast(e.message, false); }
+}
+
+async function exportCSV() {
+  const ops = await api('GET', '/api/ops?limit=10000');
+  const rows = [['Тип','Описание','Сумма','Дата','Пользователь']];
+  ops.forEach(op => {
+    const d = new Date(op.created_at * 1000).toLocaleString('ru-RU');
+    if (op.type === 'income-goods') rows.push(['Приход товара', op.name+' '+op.qty+' '+(op.unit||'шт'), op.total, d, op.user_login]);
+    if (op.type === 'income-money') rows.push(['Приход денег', op.source||'', op.amount, d, op.user_login]);
+    if (op.type === 'expense') rows.push(['Расход', (op.category||'')+' '+(op.description||''), op.amount, d, op.user_login]);
+    if (op.type === 'sale') rows.push(['Продажа', op.name+' '+op.qty+'шт · '+(op.client||''), op.total, d, op.user_login]);
+  });
+  const csv = '\uFEFF' + rows.map(r => r.map(c => `"${c||''}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8'}));
+  a.download = 'sklad_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+  toast('CSV скачан');
+}
+
+function resetAll() {
+  toast('Сброс данных недоступен через браузер — обратитесь к администратору сервера', false);
+}
+
+// ─── INIT — проверяем токен при загрузке ───
+(async () => {
+  if (TOKEN) {
+    try {
+      const user = await api('GET', '/api/auth/me');
+      showApp(user);
+    } catch(e) {
+      TOKEN = null;
+      localStorage.removeItem('sklad_token');
+    }
+  }
+})();
+</script>
+</body>
+</html>
