@@ -284,6 +284,15 @@ td .name { color: var(--text); font-weight: 500; }
 @media (max-width: 480px) {
   .stats-grid { grid-template-columns: 1fr 1fr; }
 }
+@media print {
+  .sidebar, .mobile-nav, .page-header .btn, #report-day { display: none !important; }
+  .main { margin-left: 0 !important; padding: 0 !important; }
+  .card { break-inside: avoid; border: 1px solid #ccc !important; background: #fff !important; color: #000 !important; }
+  body { background: #fff !important; color: #000 !important; }
+  .stat-card { background: #f5f5f5 !important; color: #000 !important; }
+  .stat-val, .stat-label, .stat-change { color: #000 !important; }
+  th, td { color: #000 !important; border-color: #ddd !important; }
+}
 </style>
 </head>
 <body>
@@ -333,6 +342,7 @@ td .name { color: var(--text); font-weight: 500; }
       <div class="nav-item" onclick="navigate('expense')"><i class="ti ti-arrow-bar-up"></i> Расход</div>
       <div class="nav-item" onclick="navigate('sale')"><i class="ti ti-shopping-cart"></i> Продажи</div>
       <div class="nav-section">Отчёты</div>
+      <div class="nav-item" onclick="navigate('report')"><i class="ti ti-file-analytics"></i> Дневной отчёт</div>
       <div class="nav-item" onclick="navigate('history')"><i class="ti ti-history"></i> История</div>
       <div class="nav-item admin-only" onclick="navigate('admin')"><i class="ti ti-shield"></i> Админ-панель</div>
     </nav>
@@ -353,7 +363,7 @@ td .name { color: var(--text); font-weight: 500; }
       <div class="mobile-nav-item" onclick="navigate('stock')"><i class="ti ti-package"></i>Склад</div>
       <div class="mobile-nav-item" onclick="navigate('income')"><i class="ti ti-arrow-bar-down"></i>Приход</div>
       <div class="mobile-nav-item" onclick="navigate('sale')"><i class="ti ti-shopping-cart"></i>Продажа</div>
-      <div class="mobile-nav-item" onclick="navigate('history')"><i class="ti ti-history"></i>История</div>
+      <div class="mobile-nav-item" onclick="navigate('report')"><i class="ti ti-file-analytics"></i>Отчёт</div>
     </div>
   </div>
 
@@ -555,6 +565,91 @@ td .name { color: var(--text); font-weight: 500; }
       </div>
     </div>
 
+    <!-- DAILY REPORT -->
+    <div class="page" id="page-report">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Дневной отчёт</div>
+          <div class="page-sub" id="report-date"></div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <input type="date" id="report-day" style="padding:8px 12px;border-radius:6px;background:var(--bg3);border:1px solid var(--border2);color:var(--text);font-size:13px;outline:none;" onchange="renderReport()">
+          <button class="btn btn-ghost btn-sm" onclick="printReport()"><i class="ti ti-printer"></i> Печать</button>
+          <button class="btn btn-ghost btn-sm" onclick="exportReportCSV()"><i class="ti ti-download"></i> CSV</button>
+        </div>
+      </div>
+
+      <!-- Summary cards -->
+      <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px" id="report-stats-grid">
+        <div class="stat-card green">
+          <div class="stat-icon"><i class="ti ti-trending-up"></i></div>
+          <div class="stat-label">Выручка за день</div>
+          <div class="stat-val" id="r-revenue">0</div>
+          <div class="stat-change" id="r-sales-cnt">0 продаж</div>
+        </div>
+        <div class="stat-card red">
+          <div class="stat-icon"><i class="ti ti-trending-down"></i></div>
+          <div class="stat-label">Расходы за день</div>
+          <div class="stat-val" id="r-expense">0</div>
+          <div class="stat-change" id="r-exp-cnt">0 операций</div>
+        </div>
+        <div class="stat-card blue">
+          <div class="stat-icon"><i class="ti ti-coin"></i></div>
+          <div class="stat-label">Чистая прибыль</div>
+          <div class="stat-val" id="r-profit">0</div>
+          <div class="stat-change">выручка − расход</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-icon"><i class="ti ti-cash"></i></div>
+          <div class="stat-label">Приход денег</div>
+          <div class="stat-val" id="r-money-in">0</div>
+          <div class="stat-change" id="r-money-src">—</div>
+        </div>
+        <div class="stat-card blue">
+          <div class="stat-icon"><i class="ti ti-box"></i></div>
+          <div class="stat-label">Приход товара</div>
+          <div class="stat-val" id="r-goods-in">0</div>
+          <div class="stat-change" id="r-goods-cnt">0 позиций</div>
+        </div>
+        <div class="stat-card amber">
+          <div class="stat-icon"><i class="ti ti-credit-card-off"></i></div>
+          <div class="stat-label">Долги (Карз)</div>
+          <div class="stat-val" id="r-debts">0</div>
+          <div class="stat-change">за выбранный день</div>
+        </div>
+      </div>
+
+      <!-- Продажи по клиентам -->
+      <div class="card">
+        <div class="card-title"><i class="ti ti-users"></i> Продажи по клиентам</div>
+        <div class="table-wrap"><div id="r-clients-table"></div></div>
+      </div>
+
+      <!-- Продажи по способу оплаты -->
+      <div class="card">
+        <div class="card-title"><i class="ti ti-wallet"></i> По способу оплаты</div>
+        <div class="table-wrap"><div id="r-paytype-table"></div></div>
+      </div>
+
+      <!-- Приход товаров -->
+      <div class="card">
+        <div class="card-title"><i class="ti ti-arrow-bar-down"></i> Приход товаров</div>
+        <div class="table-wrap"><div id="r-goods-table"></div></div>
+      </div>
+
+      <!-- Расходы -->
+      <div class="card">
+        <div class="card-title"><i class="ti ti-arrow-bar-up"></i> Расходы</div>
+        <div class="table-wrap"><div id="r-expense-table"></div></div>
+      </div>
+
+      <!-- Все операции дня -->
+      <div class="card">
+        <div class="card-title"><i class="ti ti-list"></i> Все операции дня</div>
+        <div class="table-wrap"><div id="r-all-table"></div></div>
+      </div>
+    </div>
+
     <!-- ADMIN -->
     <div class="page" id="page-admin">
       <div class="page-header">
@@ -678,6 +773,7 @@ function navigate(id) {
   if (id === 'sale') { populateSaleItems(); renderTodaySales(); }
   if (id === 'history') renderHistory();
   if (id === 'income') renderIncomeHistory();
+  if (id === 'report') renderReport();
   if (id === 'admin') renderAdmin();
 }
 
@@ -935,6 +1031,130 @@ async function exportCSV() {
 
 function resetAll() {
   toast('Сброс данных недоступен через браузер — обратитесь к администратору сервера', false);
+}
+
+async function renderReport() {
+  // Set default date to today
+  const dayInput = document.getElementById('report-day');
+  if (!dayInput.value) dayInput.value = new Date().toISOString().slice(0, 10);
+  const selectedDate = dayInput.value;
+  document.getElementById('report-date').textContent = new Date(selectedDate + 'T12:00:00').toLocaleDateString('ru-RU', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+
+  try {
+    const ops = await api('GET', '/api/ops?limit=10000');
+
+    // Filter by selected day
+    const dayOps = ops.filter(op => {
+      const d = new Date(op.created_at * 1000).toISOString().slice(0, 10);
+      return d === selectedDate;
+    });
+
+    // ─── Stats ───
+    const sales = dayOps.filter(o => o.type === 'sale');
+    const expenses = dayOps.filter(o => o.type === 'expense');
+    const goodsIn = dayOps.filter(o => o.type === 'income-goods');
+    const moneyIn = dayOps.filter(o => o.type === 'income-money');
+
+    const revenue = sales.reduce((a, b) => a + b.total, 0);
+    const profit = sales.reduce((a, b) => a + (b.profit || 0), 0);
+    const expTotal = expenses.reduce((a, b) => a + b.amount, 0);
+    const moneyInTotal = moneyIn.reduce((a, b) => a + b.amount, 0);
+    const goodsInTotal = goodsIn.reduce((a, b) => a + b.total, 0);
+    const karzDay = sales.filter(o => o.paytype === 'Карз').reduce((a, b) => a + b.total, 0);
+    const karzPaidDay = moneyIn.filter(o => o.source === 'Карз').reduce((a, b) => a + b.amount, 0);
+    const debtsDay = Math.max(0, karzDay - karzPaidDay);
+
+    document.getElementById('r-revenue').textContent = fmtNum(revenue);
+    document.getElementById('r-sales-cnt').textContent = sales.length + ' продаж';
+    document.getElementById('r-expense').textContent = fmtNum(expTotal);
+    document.getElementById('r-exp-cnt').textContent = expenses.length + ' операций';
+    document.getElementById('r-profit').textContent = fmtNum(profit - expTotal);
+    document.getElementById('r-profit').style.color = (profit - expTotal) >= 0 ? 'var(--green)' : 'var(--red)';
+    document.getElementById('r-money-in').textContent = fmtNum(moneyInTotal);
+    document.getElementById('r-money-src').textContent = moneyIn.map(o => o.source).filter(Boolean).join(', ') || '—';
+    document.getElementById('r-goods-in').textContent = fmtNum(goodsInTotal);
+    document.getElementById('r-goods-cnt').textContent = goodsIn.length + ' позиций';
+    document.getElementById('r-debts').textContent = fmtNum(debtsDay);
+
+    // ─── Продажи по клиентам ───
+    const byClient = {};
+    sales.forEach(o => {
+      const k = o.client || 'Без имени';
+      if (!byClient[k]) byClient[k] = { total: 0, cnt: 0, paytype: o.paytype };
+      byClient[k].total += o.total;
+      byClient[k].cnt++;
+    });
+    const clientEl = document.getElementById('r-clients-table');
+    if (!Object.keys(byClient).length) {
+      clientEl.innerHTML = '<div class="empty"><i class="ti ti-inbox"></i><p>Продаж нет</p></div>';
+    } else {
+      clientEl.innerHTML = `<table><thead><tr><th>Клиент</th><th>Кол-во продаж</th><th>Способ оплаты</th><th>Сумма</th></tr></thead><tbody>` +
+        Object.entries(byClient).sort((a,b) => b[1].total - a[1].total).map(([name, v]) =>
+          `<tr><td><span class="name">${name}</span></td><td>${v.cnt}</td><td><span class="op-badge op-sale">${v.paytype||'—'}</span></td><td style="font-family:var(--mono);color:var(--green);font-weight:600">${fmt(v.total)}</td></tr>`
+        ).join('') + `<tr style="border-top:2px solid var(--border2)"><td colspan="3" style="font-weight:600">Итого</td><td style="font-family:var(--mono);color:var(--green);font-weight:700">${fmt(revenue)}</td></tr></tbody></table>`;
+    }
+
+    // ─── По способу оплаты ───
+    const byPay = {};
+    sales.forEach(o => {
+      const k = o.paytype || 'Нахт';
+      if (!byPay[k]) byPay[k] = { total: 0, cnt: 0 };
+      byPay[k].total += o.total;
+      byPay[k].cnt++;
+    });
+    document.getElementById('r-paytype-table').innerHTML = Object.keys(byPay).length
+      ? `<table><thead><tr><th>Способ оплаты</th><th>Кол-во</th><th>Сумма</th></tr></thead><tbody>` +
+        Object.entries(byPay).map(([pay, v]) =>
+          `<tr><td><span class="op-badge op-sale">${pay}</span></td><td>${v.cnt}</td><td style="font-family:var(--mono);color:var(--green);font-weight:600">${fmt(v.total)}</td></tr>`
+        ).join('') + `</tbody></table>`
+      : '<div class="empty"><i class="ti ti-inbox"></i><p>Нет данных</p></div>';
+
+    // ─── Приход товаров ───
+    document.getElementById('r-goods-table').innerHTML = goodsIn.length
+      ? `<table><thead><tr><th>Товар</th><th>Кол-во</th><th>Цена закупки</th><th>Сумма</th></tr></thead><tbody>` +
+        goodsIn.map(o =>
+          `<tr><td><span class="name">${o.name}</span></td><td>${o.qty} ${o.unit||'шт'}</td><td style="font-family:var(--mono)">${fmtNum(o.price)} сум</td><td style="font-family:var(--mono);color:var(--text2)">${fmt(o.total)}</td></tr>`
+        ).join('') + `</tbody></table>`
+      : '<div class="empty"><i class="ti ti-inbox"></i><p>Прихода товаров нет</p></div>';
+
+    // ─── Расходы ───
+    document.getElementById('r-expense-table').innerHTML = expenses.length
+      ? `<table><thead><tr><th>Категория</th><th>Описание</th><th>Сумма</th></tr></thead><tbody>` +
+        expenses.map(o =>
+          `<tr><td><span class="name">${o.category||'—'}</span></td><td style="color:var(--text2)">${o.description||'—'}</td><td style="font-family:var(--mono);color:var(--red);font-weight:600">−${fmt(o.amount)}</td></tr>`
+        ).join('') + `<tr style="border-top:2px solid var(--border2)"><td colspan="2" style="font-weight:600">Итого расходов</td><td style="font-family:var(--mono);color:var(--red);font-weight:700">−${fmt(expTotal)}</td></tr></tbody></table>`
+      : '<div class="empty"><i class="ti ti-inbox"></i><p>Расходов нет</p></div>';
+
+    // ─── Все операции ───
+    document.getElementById('r-all-table').innerHTML = opTable(dayOps);
+
+  } catch(e) { console.error(e); }
+}
+
+function printReport() {
+  window.print();
+}
+
+async function exportReportCSV() {
+  const dayInput = document.getElementById('report-day');
+  const selectedDate = dayInput.value || new Date().toISOString().slice(0, 10);
+  const ops = await api('GET', '/api/ops?limit=10000');
+  const dayOps = ops.filter(op => new Date(op.created_at * 1000).toISOString().slice(0, 10) === selectedDate);
+
+  const rows = [['Тип','Описание','Клиент','Способ оплаты','Сумма','Дата']];
+  dayOps.forEach(op => {
+    const d = new Date(op.created_at * 1000).toLocaleString('ru-RU');
+    if (op.type === 'income-goods') rows.push(['Приход товара', op.name+' '+op.qty+' '+(op.unit||'шт'), '', '', op.total, d]);
+    if (op.type === 'income-money') rows.push(['Приход денег', op.source||'', '', '', op.amount, d]);
+    if (op.type === 'expense') rows.push(['Расход', (op.category||'')+' '+(op.description||''), '', '', -op.amount, d]);
+    if (op.type === 'sale') rows.push(['Продажа', op.name+' '+op.qty+'шт', op.client||'', op.paytype||'', op.total, d]);
+  });
+  const csv = '\uFEFF' + rows.map(r => r.map(c => `"${c||''}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8'}));
+  a.download = `otchet_${selectedDate}.csv`;
+  a.click();
+  toast('Отчёт скачан');
 }
 
 // ─── INIT — проверяем токен при загрузке ───

@@ -27,7 +27,7 @@ git init
 git add .
 git commit -m "first commit"
 git branch -M main
-git remote add origin https://github.com/pixel33/skladpro.git
+git remote add origin https://github.com/PIXSEL33/skladpro.git
 git push -u origin main
 ```
 
@@ -98,9 +98,3 @@ npm install
 npm start
 # Открой http://localhost:3000
 ```
-# sklad
-# sklad
-# sklad
-# skladpro
-# sklad
-# sklad
